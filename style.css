@@ -916,6 +916,69 @@ input[type="text"]::placeholder {
     to { transform: translateX(0); opacity: 1; }
 }
 
+/* ---- Light Mode ---- */
+[data-theme="light"] {
+    --bg-primary: #f8fafc;
+    --bg-secondary: #ffffff;
+    --bg-card: #ffffff;
+    --bg-input: #f1f5f9;
+    --border: #e2e8f0;
+    --border-focus: #3b82f6;
+    --text-primary: #1e293b;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07);
+}
+
+[data-theme="light"] .header {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .badge.source {
+    background: rgba(59, 130, 246, 0.08);
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+[data-theme="light"] .badge.target {
+    background: rgba(16, 185, 129, 0.08);
+    border-color: rgba(16, 185, 129, 0.2);
+}
+
+[data-theme="light"] .btn-transport {
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+[data-theme="light"] .toast.success {
+    background: rgba(16, 185, 129, 0.08);
+    border-color: rgba(16, 185, 129, 0.2);
+}
+
+[data-theme="light"] .toast.error {
+    background: rgba(239, 68, 68, 0.08);
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+[data-theme="light"] .toast.info {
+    background: rgba(59, 130, 246, 0.08);
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+[data-theme="light"] .log-container {
+    background: #f8fafc;
+}
+
+[data-theme="light"] .type-option.selected {
+    background: rgba(59, 130, 246, 0.05);
+}
+
+[data-theme="light"] .tr-info-panel {
+    background: rgba(59, 130, 246, 0.03);
+}
+
+[data-theme="light"] .history-item {
+    background: #f8fafc;
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 768px) {
     .header {

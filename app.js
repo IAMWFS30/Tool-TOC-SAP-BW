@@ -10,11 +10,19 @@ class TransportManager {
 
     init() {
         this.loadSavedSettings();
+        this.loadTheme();
         this.renderHistory();
         this.bindEvents();
         this.log('info', 'Transport Manager initialized.');
         this.log('info', `Flow: Create ToC → Include Objects → Release → WA Notify`);
         this.log('info', `Source: ${CONFIG.sourceSystem.id} | Target: ${CONFIG.targetSystem.id}`);
+    }
+
+    loadTheme() {
+        const saved = localStorage.getItem('toc_theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', saved);
+        const icon = document.querySelector('#theme-toggle i');
+        if (icon) icon.className = saved === 'light' ? 'fas fa-moon' : 'fas fa-sun';
     }
 
     // ---- Form Validation ----
@@ -385,6 +393,18 @@ class TransportManager {
         toast.innerHTML = `<i class="fas ${icon}"></i> ${message}`;
         container.appendChild(toast);
         setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 4000);
+    }
+
+    // ---- Theme Toggle ----
+    toggleTheme() {
+        const html = document.documentElement;
+        const current = html.getAttribute('data-theme');
+        const newTheme = current === 'light' ? 'dark' : 'light';
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('toc_theme', newTheme);
+
+        const icon = document.querySelector('#theme-toggle i');
+        icon.className = newTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
     }
 
     // ---- Events ----
