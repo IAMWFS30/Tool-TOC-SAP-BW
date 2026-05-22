@@ -44,6 +44,10 @@ const CONFIG = {
 
     // API Configuration
     api: {
+        // Backend URL — change this to your internal server IP when deployed
+        // Examples:
+        //   Local: "http://localhost:3000/api"
+        //   Internal server: "http://10.141.x.x:3000/api"
         baseUrl: "http://localhost:3000/api",
         timeout: 60000,
         mockMode: false
