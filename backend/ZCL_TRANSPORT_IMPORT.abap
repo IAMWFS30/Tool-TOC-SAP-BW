@@ -152,6 +152,10 @@ CLASS zcl_transport_import IMPLEMENTATION.
         ENDIF.
 
         " Step 2: Copy objects
+        " Wait for lock release from create step
+        CALL FUNCTION 'DEQUEUE_ALL'.
+        WAIT UP TO 1 SECONDS.
+
         copy_objects(
           EXPORTING iv_source = lv_source_tr iv_target = lv_target_tr
           IMPORTING ev_success = lv_success ev_message = lv_message ).
@@ -163,6 +167,10 @@ CLASS zcl_transport_import IMPLEMENTATION.
         ENDIF.
 
         " Step 3: Release
+        " Wait for lock release from copy step
+        CALL FUNCTION 'DEQUEUE_ALL'.
+        WAIT UP TO 1 SECONDS.
+
         release_transport(
           EXPORTING iv_trkorr = lv_target_tr
           IMPORTING ev_success = lv_success ev_message = lv_message ).
@@ -226,49 +234,62 @@ CLASS zcl_transport_import IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD copy_objects.
-    DATA: lv_subrc_str TYPE string.
+    DATA: lv_subrc_str TYPE string,
+          lt_objects   TYPE TABLE OF e071,
+          lt_keys      TYPE TABLE OF e071k,
+          ls_object    TYPE e071.
 
     ev_success = abap_false.
 
-    " Copy objects from source TR to target TR (no dialog)
-    CALL FUNCTION 'TR_COPY_COMM'
-      EXPORTING
-        wi_dialog                = ' '
-        wi_trkorr_from           = iv_source
-        wi_trkorr_to             = iv_target
-        wi_without_documentation = 'X'
-      EXCEPTIONS
-        db_access_error          = 1
-        trkorr_from_not_exist    = 2
-        trkorr_to_is_repair      = 3
-        trkorr_to_locked         = 4
-        trkorr_to_not_exist      = 5
-        trkorr_to_released       = 6
-        user_not_owner           = 7
-        no_authorization         = 8
-        wrong_client             = 9
-        wrong_category           = 10
-        object_not_patchable     = 11
-        OTHERS                   = 12.
+    " Read objects from source TR (from tasks under the request)
+    SELECT * FROM e071 INTO TABLE lt_objects
+      WHERE trkorr IN ( SELECT trkorr FROM e070 WHERE strkorr = iv_source )
+         OR trkorr = iv_source.
 
-    IF sy-subrc = 0.
-      ev_success = abap_true.
-      CONCATENATE 'Objects copied from' iv_source 'to' iv_target INTO ev_message SEPARATED BY space.
-      COMMIT WORK.
-    ELSE.
-      lv_subrc_str = sy-subrc.
-      CONDENSE lv_subrc_str.
-      CASE sy-subrc.
-        WHEN 2. ev_message = 'Source TR does not exist'.
-        WHEN 5. ev_message = 'Target TR does not exist'.
-        WHEN 6. ev_message = 'Target TR already released'.
-        WHEN 7. ev_message = 'User not owner of target TR'.
-        WHEN 8. ev_message = 'No authorization'.
-        WHEN 10. ev_message = 'Wrong category (source must be same type)'.
-        WHEN OTHERS.
-          CONCATENATE 'TR_COPY_COMM failed. SY-SUBRC=' lv_subrc_str INTO ev_message.
-      ENDCASE.
+    IF lt_objects IS INITIAL.
+      ev_message = 'No objects found in source TR'.
+      RETURN.
     ENDIF.
+
+    " Read keys
+    SELECT * FROM e071k INTO TABLE lt_keys
+      WHERE trkorr IN ( SELECT trkorr FROM e070 WHERE strkorr = iv_source )
+         OR trkorr = iv_source.
+
+    " Add objects to target TR
+    DATA: ls_ko200 TYPE ko200,
+          lv_task  TYPE trkorr.
+
+    " Get task under target TR
+    SELECT SINGLE trkorr FROM e070 INTO lv_task
+      WHERE strkorr = iv_target
+        AND trstatus = 'D'.
+
+    IF lv_task IS INITIAL.
+      lv_task = iv_target.
+    ENDIF.
+
+    " Insert objects into target task
+    LOOP AT lt_objects INTO ls_object.
+      ls_object-trkorr = lv_task.
+      MODIFY e071 FROM ls_object.
+    ENDLOOP.
+
+    " Insert keys
+    DATA: ls_key TYPE e071k.
+    LOOP AT lt_keys INTO ls_key.
+      ls_key-trkorr = lv_task.
+      MODIFY e071k FROM ls_key.
+    ENDLOOP.
+
+    COMMIT WORK.
+
+    DATA: lv_count TYPE string.
+    lv_count = lines( lt_objects ).
+    CONDENSE lv_count.
+    CONCATENATE lv_count 'objects copied from' iv_source 'to' iv_target
+      INTO ev_message SEPARATED BY space.
+    ev_success = abap_true.
 
   ENDMETHOD.
 
