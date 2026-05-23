@@ -322,6 +322,35 @@ input[type="text"]::placeholder {
     color: var(--accent-blue);
 }
 
+/* ---- Password Input with Eye ---- */
+.input-password-wrap {
+    position: relative;
+    width: 100%;
+}
+
+.input-password-wrap input {
+    width: 100%;
+    padding-right: 44px;
+}
+
+.btn-eye {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 4px;
+    transition: var(--transition);
+}
+
+.btn-eye:hover {
+    color: var(--accent-blue);
+}
+
 /* ---- Type Selector ---- */
 .type-selector {
     display: grid;
