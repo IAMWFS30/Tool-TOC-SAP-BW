@@ -6,6 +6,12 @@
  */
 
 const CONFIG = {
+    // Server presets
+    servers: {
+        bw: { name: "SAP BW (MBD)", host: "dc1sdevbw.mitrakeluarga.com", port: "8051", client: "100", target: "MBQ" },
+        ecc: { name: "SAP ECC (MED)", host: "dc1sdevecc.mitrakeluarga.com", port: "8001", client: "100", target: "MEQ" }
+    },
+
     // SAP Connection (configurable via Settings UI)
     sap: {
         host: "dc1sdevbw.mitrakeluarga.com",

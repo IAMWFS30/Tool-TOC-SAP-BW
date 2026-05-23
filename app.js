@@ -254,6 +254,18 @@ class TransportManager {
     resetSteps() { for (let i = 1; i <= 4; i++) document.querySelector(`#step-${i} .step-icon`).className = 'step-icon pending'; }
     setStep(n, state) { document.querySelector(`#step-${n} .step-icon`).className = `step-icon ${state}`; }
 
+    // ---- Server Preset Selection ----
+    onServerSelect() {
+        const sel = document.getElementById('sap-server-select').value;
+        if (sel && CONFIG.servers[sel]) {
+            const s = CONFIG.servers[sel];
+            document.getElementById('sap-host').value = s.host;
+            document.getElementById('sap-port').value = s.port;
+            document.getElementById('sap-client').value = s.client;
+            document.getElementById('sap-target').value = s.target;
+        }
+    }
+
     // ---- Password Visibility Toggle ----
     togglePasswordVisibility(inputId, btn) {
         const input = document.getElementById(inputId);
