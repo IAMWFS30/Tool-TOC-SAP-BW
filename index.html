@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Transport Manager — Create ToC & Notify Basis</title>
+    <title>Transport Manager — SAP BW ToC</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -22,14 +22,9 @@
                 </div>
             </div>
             <div class="header-right">
-                <div class="system-badges">
-                    <span class="badge source">
-                        <span class="dot"></span> MBD (DEV)
-                    </span>
-                    <i class="fas fa-arrow-right arrow-icon"></i>
-                    <span class="badge target">
-                        <span class="dot"></span> MBQ (QA)
-                    </span>
+                <div class="connection-status" id="conn-status">
+                    <span class="dot offline"></span>
+                    <span id="conn-text">Not connected</span>
                 </div>
                 <button class="btn-icon" onclick="app.toggleHistory()" title="History">
                     <i class="fas fa-clock-rotate-left"></i>
@@ -45,48 +40,71 @@
 
         <!-- Main Content -->
         <main class="main">
+            <!-- Connection Card (shown when not configured) -->
+            <div class="card connection-card" id="connection-card">
+                <div class="card-header">
+                    <h2><i class="fas fa-plug"></i> SAP Connection</h2>
+                    <p>Configure SAP server credentials to get started.</p>
+                </div>
+                <div class="form-container">
+                    <div class="form-row form-row-grid">
+                        <div class="form-group">
+                            <label>Host</label>
+                            <input type="text" id="sap-host" placeholder="dc1sdevbw.mitrakeluarga.com">
+                        </div>
+                        <div class="form-group" style="max-width:100px">
+                            <label>Port</label>
+                            <input type="text" id="sap-port" placeholder="8051">
+                        </div>
+                        <div class="form-group" style="max-width:80px">
+                            <label>Client</label>
+                            <input type="text" id="sap-client" placeholder="100">
+                        </div>
+                    </div>
+                    <div class="form-row form-row-grid">
+                        <div class="form-group">
+                            <label>Username</label>
+                            <input type="text" id="sap-user" placeholder="SAP User" autocomplete="username">
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" id="sap-pass" placeholder="Password" autocomplete="current-password">
+                        </div>
+                    </div>
+                    <div class="form-row form-row-grid">
+                        <div class="form-group" style="max-width:120px">
+                            <label>Target System</label>
+                            <input type="text" id="sap-target" placeholder="MBQ">
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn-transport" onclick="app.testConnection()">
+                            <i class="fas fa-plug"></i> <span>Test Connection & Save</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Transport Form Card -->
-            <div class="card transport-card">
+            <div class="card transport-card" id="transport-card">
                 <div class="card-header">
                     <h2><i class="fas fa-paper-plane"></i> Create Transport of Copies & Notify</h2>
-                    <p>Masukkan nomor TR sumber, lalu sistem akan create ToC, include objects, release, dan kirim notifikasi WA ke Basis.</p>
+                    <p>Masukkan nomor TR sumber. Sistem akan create ToC, include objects, release, dan kirim WA ke Basis.</p>
                 </div>
 
                 <div class="form-container">
-                    <!-- Source TR Input -->
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="tr-number">
-                                <i class="fas fa-hashtag"></i> Source Transport Request (TR Asli)
-                            </label>
-                            <div class="input-with-action">
-                                <input 
-                                    type="text" 
-                                    id="tr-number" 
-                                    placeholder="MBDK900123"
-                                    autocomplete="off"
-                                    spellcheck="false"
-                                    maxlength="12"
-                                >
-                                <button class="btn-validate" onclick="app.validateTR()" title="Validate TR">
-                                    <i class="fas fa-magnifying-glass"></i>
-                                </button>
-                            </div>
-                            <span class="form-hint" id="tr-hint">Format: MBDK9XXXXX — TR yang object-nya mau di-copy</span>
+                            <label><i class="fas fa-hashtag"></i> Source Transport Request (TR Asli)</label>
+                            <input type="text" id="tr-number" placeholder="MBDK900123" autocomplete="off" spellcheck="false" maxlength="12">
+                            <span class="form-hint" id="tr-hint">Format: MBDK9XXXXX</span>
                         </div>
                     </div>
 
-                    <!-- Description -->
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="tr-desc">
-                                <i class="fas fa-align-left"></i> Description (untuk ToC baru)
-                            </label>
-                            <input 
-                                type="text" 
-                                id="tr-desc" 
-                                placeholder="e.g., Copy of enhancement XYZ for QA testing"
-                            >
+                            <label><i class="fas fa-align-left"></i> Description (untuk ToC baru)</label>
+                            <input type="text" id="tr-desc" placeholder="e.g., Copy of enhancement XYZ for QA">
                         </div>
                     </div>
 
@@ -94,35 +112,25 @@
                     <div class="steps-preview">
                         <div class="step-item" id="step-1">
                             <div class="step-icon pending"><i class="fas fa-plus-circle"></i></div>
-                            <div class="step-text">
-                                <strong>Create</strong> Transport of Copies
-                            </div>
+                            <div class="step-text"><strong>Create</strong>Transport of Copies</div>
                         </div>
                         <div class="step-item" id="step-2">
                             <div class="step-icon pending"><i class="fas fa-boxes-stacked"></i></div>
-                            <div class="step-text">
-                                <strong>Include</strong> objects from source TR
-                            </div>
+                            <div class="step-text"><strong>Include</strong>Objects from source</div>
                         </div>
                         <div class="step-item" id="step-3">
                             <div class="step-icon pending"><i class="fas fa-rocket"></i></div>
-                            <div class="step-text">
-                                <strong>Release</strong> Transport of Copies
-                            </div>
+                            <div class="step-text"><strong>Release</strong>Transport of Copies</div>
                         </div>
                         <div class="step-item" id="step-4">
                             <div class="step-icon pending"><i class="fab fa-whatsapp"></i></div>
-                            <div class="step-text">
-                                <strong>Notify</strong> Basis via WhatsApp
-                            </div>
+                            <div class="step-text"><strong>Notify</strong>Basis via WhatsApp</div>
                         </div>
                     </div>
 
-                    <!-- Action Button -->
                     <div class="form-actions">
                         <button class="btn-transport" id="btn-execute" onclick="app.execute()" disabled>
-                            <i class="fas fa-bolt"></i>
-                            <span>Execute: Create → Release → Notify</span>
+                            <i class="fas fa-bolt"></i> <span>Execute: Create → Release → Notify</span>
                         </button>
                         <button class="btn-clear" onclick="app.clearForm()">
                             <i class="fas fa-eraser"></i> Clear
@@ -138,10 +146,7 @@
                     <button class="btn-text" onclick="app.clearLog()">Clear</button>
                 </div>
                 <div class="log-container" id="log-container">
-                    <div class="log-empty">
-                        <i class="fas fa-terminal"></i>
-                        <p>No activity yet. Execute to see the log.</p>
-                    </div>
+                    <div class="log-empty"><i class="fas fa-terminal"></i><p>No activity yet.</p></div>
                 </div>
             </div>
         </main>
@@ -150,9 +155,7 @@
         <aside class="history-panel hidden" id="history-panel">
             <div class="panel-header">
                 <h3><i class="fas fa-clock-rotate-left"></i> History</h3>
-                <button class="btn-icon" onclick="app.toggleHistory()">
-                    <i class="fas fa-xmark"></i>
-                </button>
+                <button class="btn-icon" onclick="app.toggleHistory()"><i class="fas fa-xmark"></i></button>
             </div>
             <div class="history-list" id="history-list"></div>
         </aside>
@@ -162,31 +165,25 @@
             <div class="modal">
                 <div class="modal-header">
                     <h3><i class="fas fa-gear"></i> Settings</h3>
-                    <button class="btn-icon" onclick="app.closeSettings()">
-                        <i class="fas fa-xmark"></i>
-                    </button>
+                    <button class="btn-icon" onclick="app.closeSettings()"><i class="fas fa-xmark"></i></button>
                 </div>
                 <div class="modal-body">
                     <div class="settings-section">
-                        <h4>WhatsApp Notification</h4>
-                        <div class="form-group">
-                            <label>Fonnte API Token</label>
-                            <input type="text" id="set-wa-token" placeholder="Token from fonnte.com">
-                        </div>
-                        <div class="form-group">
-                            <label>Target (Group ID or Phone)</label>
-                            <input type="text" id="set-wa-target" placeholder="Group ID or 6281234567890">
-                        </div>
-                        <div class="form-group">
-                            <label>Message Template ({TR} = TR number)</label>
-                            <textarea id="set-wa-template" rows="4" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text-primary);font-family:inherit;font-size:13px;resize:vertical;"></textarea>
-                        </div>
+                        <h4>SAP Connection</h4>
+                        <div class="form-group"><label>Host</label><input type="text" id="set-host"></div>
+                        <div class="form-group"><label>Port</label><input type="text" id="set-port"></div>
+                        <div class="form-group"><label>Client</label><input type="text" id="set-client"></div>
+                        <div class="form-group"><label>Username</label><input type="text" id="set-user"></div>
+                        <div class="form-group"><label>Password</label><input type="password" id="set-pass"></div>
+                        <div class="form-group"><label>Target System</label><input type="text" id="set-target"></div>
                     </div>
                     <div class="settings-section">
-                        <h4>API Backend</h4>
-                        <div class="form-group">
-                            <label>Base URL</label>
-                            <input type="text" id="set-api-url" value="http://localhost:3000/api">
+                        <h4>WhatsApp (Fonnte)</h4>
+                        <label class="checkbox-label"><input type="checkbox" id="set-wa-enabled"> Enable WA notification</label>
+                        <div class="form-group"><label>API Token</label><input type="text" id="set-wa-token"></div>
+                        <div class="form-group"><label>Target (Group ID)</label><input type="text" id="set-wa-target"></div>
+                        <div class="form-group"><label>Message Template ({TR} = TR number)</label>
+                            <textarea id="set-wa-template" rows="3" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text-primary);font-family:inherit;font-size:13px;resize:vertical;"></textarea>
                         </div>
                     </div>
                     <div class="modal-actions">
@@ -200,26 +197,19 @@
         <!-- Confirm Modal -->
         <div class="modal-overlay hidden" id="confirm-modal">
             <div class="modal modal-sm">
-                <div class="modal-header">
-                    <h3><i class="fas fa-triangle-exclamation"></i> Confirm</h3>
-                </div>
+                <div class="modal-header"><h3><i class="fas fa-triangle-exclamation"></i> Confirm</h3></div>
                 <div class="modal-body">
                     <div class="confirm-details" id="confirm-details"></div>
-                    <p class="confirm-warning">
-                        Akan create Transport of Copies, release, dan kirim WA ke Basis. Lanjutkan?
-                    </p>
+                    <p class="confirm-warning">Create ToC, release, dan kirim WA ke Basis. Lanjutkan?</p>
                 </div>
                 <div class="modal-actions">
-                    <button class="btn-danger" onclick="app.confirmExecute()">
-                        <i class="fas fa-bolt"></i> Yes, Execute
-                    </button>
+                    <button class="btn-danger" onclick="app.confirmExecute()"><i class="fas fa-bolt"></i> Execute</button>
                     <button class="btn-secondary" onclick="app.cancelExecute()">Cancel</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Toast -->
     <div class="toast-container" id="toast-container"></div>
 
     <script src="config.js"></script>

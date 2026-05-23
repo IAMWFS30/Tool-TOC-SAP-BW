@@ -416,6 +416,43 @@ input[type="text"]::placeholder {
     font-weight: 500;
 }
 
+/* ---- Connection Status ---- */
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.dot.online {
+    background: var(--accent-green);
+    animation: pulse 2s infinite;
+}
+
+.dot.offline {
+    background: var(--accent-red);
+}
+
+.form-row-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.connection-card .form-container {
+    padding: 0 28px 28px;
+}
+
 /* ---- Steps Preview ---- */
 .steps-preview {
     display: flex;

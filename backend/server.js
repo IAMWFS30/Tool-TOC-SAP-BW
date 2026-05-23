@@ -154,7 +154,7 @@ app.post('/api/notify/whatsapp', async (req, res) => {
 });
 
 // ---- Start Server ----
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`\n${'='.repeat(50)}`);
     console.log(`  Transport Manager Backend`);
     console.log(`  http://localhost:${PORT}`);
