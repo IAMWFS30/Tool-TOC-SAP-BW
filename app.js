@@ -254,6 +254,19 @@ class TransportManager {
     resetSteps() { for (let i = 1; i <= 4; i++) document.querySelector(`#step-${i} .step-icon`).className = 'step-icon pending'; }
     setStep(n, state) { document.querySelector(`#step-${n} .step-icon`).className = `step-icon ${state}`; }
 
+    // ---- Password Visibility Toggle ----
+    togglePasswordVisibility(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const icon = btn.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.className = 'fas fa-eye-slash';
+        } else {
+            input.type = 'password';
+            icon.className = 'fas fa-eye';
+        }
+    }
+
     // ---- Theme ----
     toggleTheme() {
         const html = document.documentElement;

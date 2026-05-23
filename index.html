@@ -52,14 +52,17 @@
                             <label>Host</label>
                             <input type="text" id="sap-host" placeholder="dc1sdevbw.mitrakeluarga.com">
                         </div>
-                        <div class="form-group" style="max-width:100px">
+                        <div class="form-group">
                             <label>Port</label>
                             <input type="text" id="sap-port" placeholder="8051">
                         </div>
-                        <div class="form-group" style="max-width:80px">
+                    </div>
+                    <div class="form-row form-row-grid">
+                        <div class="form-group">
                             <label>Client</label>
                             <input type="text" id="sap-client" placeholder="100">
                         </div>
+                        <div class="form-group"></div>
                     </div>
                     <div class="form-row form-row-grid">
                         <div class="form-group">
@@ -68,14 +71,20 @@
                         </div>
                         <div class="form-group">
                             <label>Password</label>
-                            <input type="password" id="sap-pass" placeholder="Password" autocomplete="current-password">
+                            <div class="input-with-action">
+                                <input type="password" id="sap-pass" placeholder="Password" autocomplete="current-password">
+                                <button class="btn-validate" onclick="app.togglePasswordVisibility('sap-pass', this)" title="Show/Hide">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <div class="form-row form-row-grid">
-                        <div class="form-group" style="max-width:120px">
+                        <div class="form-group">
                             <label>Target System</label>
                             <input type="text" id="sap-target" placeholder="MBQ">
                         </div>
+                        <div class="form-group"></div>
                     </div>
                     <div class="form-actions">
                         <button class="btn-transport" onclick="app.testConnection()">
@@ -174,7 +183,7 @@
                         <div class="form-group"><label>Port</label><input type="text" id="set-port"></div>
                         <div class="form-group"><label>Client</label><input type="text" id="set-client"></div>
                         <div class="form-group"><label>Username</label><input type="text" id="set-user"></div>
-                        <div class="form-group"><label>Password</label><input type="password" id="set-pass"></div>
+                        <div class="form-group"><label>Password</label><div class="input-with-action"><input type="password" id="set-pass"><button class="btn-validate" onclick="app.togglePasswordVisibility('set-pass', this)" title="Show/Hide"><i class="fas fa-eye"></i></button></div></div>
                         <div class="form-group"><label>Target System</label><input type="text" id="set-target"></div>
                     </div>
                     <div class="settings-section">
