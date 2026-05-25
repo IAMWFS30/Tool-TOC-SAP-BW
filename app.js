@@ -20,10 +20,8 @@ class TransportManager {
         if (CONFIG.sap.user && CONFIG.sap.host) {
             this.log('info', `SAP: ${CONFIG.sap.host}:${CONFIG.sap.port} (Client ${CONFIG.sap.client})`);
             this.log('info', `User: ${CONFIG.sap.user} | Target: ${CONFIG.targetSystem}`);
-            document.getElementById('connection-card').classList.add('hidden');
         } else {
-            this.log('info', 'Configure SAP connection to get started.');
-            document.getElementById('transport-card').classList.add('hidden');
+            this.log('info', 'SAP not configured. Open Settings (⚙) to connect.');
         }
     }
 
@@ -58,59 +56,7 @@ class TransportManager {
         }
     }
 
-    // ---- Test Connection ----
-    async testConnection() {
-        const host = document.getElementById('sap-host').value.trim();
-        const port = document.getElementById('sap-port').value.trim();
-        const client = document.getElementById('sap-client').value.trim();
-        const user = document.getElementById('sap-user').value.trim();
-        const pass = document.getElementById('sap-pass').value.trim();
-        const target = document.getElementById('sap-target').value.trim() || 'MBQ';
-
-        if (!host || !port || !user || !pass) {
-            this.toast('error', 'Fill in all connection fields');
-            return;
-        }
-
-        CONFIG.sap.host = host;
-        CONFIG.sap.port = port;
-        CONFIG.sap.client = client || '100';
-        CONFIG.sap.user = user;
-        CONFIG.sap.pass = pass;
-        CONFIG.targetSystem = target;
-
-        this.log('info', `Testing connection to ${host}:${port}...`);
-
-        try {
-            // Simple test: call service with no action (should return error but proves connectivity)
-            const result = await this.sapCall({ action: 'TEST' });
-            // Any response means connected
-            this.connected = true;
-            this.saveConnection();
-            this.updateConnectionUI();
-            document.getElementById('connection-card').classList.add('hidden');
-            document.getElementById('transport-card').classList.remove('hidden');
-            this.log('success', `✓ Connected to ${host}:${port} as ${user}`);
-            this.toast('success', 'Connected & saved!');
-        } catch (err) {
-            if (err.message.includes('Authentication failed')) {
-                this.log('error', `✗ Auth failed: wrong username/password`);
-                this.toast('error', 'Authentication failed');
-            } else if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
-                this.log('error', `✗ Cannot reach ${host}:${port}. Check network/VPN.`);
-                this.toast('error', 'Cannot reach SAP server');
-            } else {
-                // Got a response (even error) = server is reachable
-                this.connected = true;
-                this.saveConnection();
-                this.updateConnectionUI();
-                document.getElementById('connection-card').classList.add('hidden');
-                document.getElementById('transport-card').classList.remove('hidden');
-                this.log('success', `✓ Connected to ${host}:${port} as ${user}`);
-                this.toast('success', 'Connected & saved!');
-            }
-        }
-    }
+    // ---- Test Connection (from Settings) ----
 
     updateConnectionUI() {
         const dot = document.querySelector('#conn-status .dot');
@@ -192,20 +138,20 @@ class TransportManager {
 
                 // Step 4: WA notification
                 this.setStep(4, 'active');
-                if (CONFIG.whatsapp.enabled && CONFIG.whatsapp.apiToken) {
-                    this.log('info', '[4/4] Sending WhatsApp...');
+                if (CONFIG.whatsapp.enabled) {
+                    this.log('info', '[4/4] Copying WA message to clipboard...');
                     const waMsg = CONFIG.whatsapp.messageTemplate.replace('{TR}', result.trNumber);
                     try {
                         await this.sendWhatsApp(waMsg);
                         this.setStep(4, 'done');
-                        this.log('success', '[4/4] ✓ WA sent to Basis');
+                        this.log('success', '[4/4] ✓ Message copied to clipboard');
                     } catch (waErr) {
                         this.setStep(4, 'warn');
-                        this.log('warn', `[4/4] ⚠ WA failed: ${waErr.message}`);
+                        this.log('warn', `[4/4] ⚠ Copy failed: ${waErr.message}`);
                     }
                 } else {
                     this.setStep(4, 'warn');
-                    this.log('info', '[4/4] WA not configured. Skipped.');
+                    this.log('info', '[4/4] WA notification disabled. Skipped.');
                 }
 
                 const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
@@ -231,23 +177,47 @@ class TransportManager {
         }
     }
 
-    // ---- WhatsApp via Fonnte ----
+    // ---- Test Copy to Clipboard ----
+    async testCopyClipboard() {
+        const testMsg = CONFIG.whatsapp.messageTemplate.replace('{TR}', 'MBDK905999');
+        const result = document.getElementById('clipboard-result');
+
+        try {
+            await navigator.clipboard.writeText(testMsg);
+            result.textContent = '✓ Copied! Coba Ctrl+V di notepad/WA buat verify. Pesan: "' + testMsg.substring(0, 50) + '..."';
+            result.style.color = 'var(--accent-green)';
+            this.toast('success', '📋 Test: Message copied to clipboard!');
+        } catch (err) {
+            // Fallback
+            const textarea = document.createElement('textarea');
+            textarea.value = testMsg;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            result.textContent = '✓ Copied (fallback)! Coba Ctrl+V buat verify.';
+            result.style.color = 'var(--accent-green)';
+            this.toast('success', '📋 Test: Message copied!');
+        }
+    }
+
+    // ---- WhatsApp — Copy to Clipboard ----
     async sendWhatsApp(message) {
-        const response = await fetch(CONFIG.whatsapp.apiUrl, {
-            method: 'POST',
-            headers: {
-                'Authorization': CONFIG.whatsapp.apiToken,
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: new URLSearchParams({
-                target: CONFIG.whatsapp.target,
-                message: message,
-                countryCode: '62'
-            })
-        });
-        const data = await response.json();
-        if (!data.status) throw new Error(data.reason || 'WA send failed');
-        return data;
+        try {
+            await navigator.clipboard.writeText(message);
+            this.toast('success', '📋 Message copied! Paste ke WA group Basis.');
+            return { success: true };
+        } catch (err) {
+            // Fallback for older browsers
+            const textarea = document.createElement('textarea');
+            textarea.value = message;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            this.toast('success', '📋 Message copied! Paste ke WA group Basis.');
+            return { success: true };
+        }
     }
 
     // ---- Steps UI ----
@@ -255,14 +225,52 @@ class TransportManager {
     setStep(n, state) { document.querySelector(`#step-${n} .step-icon`).className = `step-icon ${state}`; }
 
     // ---- Server Preset Selection ----
-    onServerSelect() {
-        const sel = document.getElementById('sap-server-select').value;
+    onServerSelectSettings() {
+        const sel = document.getElementById('set-server-select').value;
         if (sel && CONFIG.servers[sel]) {
             const s = CONFIG.servers[sel];
-            document.getElementById('sap-host').value = s.host;
-            document.getElementById('sap-port').value = s.port;
-            document.getElementById('sap-client').value = s.client;
-            document.getElementById('sap-target').value = s.target;
+            CONFIG.sap.host = s.host;
+            CONFIG.sap.port = s.port;
+            CONFIG.sap.client = s.client;
+            CONFIG.targetSystem = s.target;
+            CONFIG.whatsapp.messageTemplate = s.waTemplate;
+            document.getElementById('set-wa-template').value = s.waTemplate;
+        }
+    }
+
+    async testConnectionFromSettings() {
+        CONFIG.sap.user = document.getElementById('set-user').value;
+        CONFIG.sap.pass = document.getElementById('set-pass').value;
+
+        if (!CONFIG.sap.host || !CONFIG.sap.user || !CONFIG.sap.pass) {
+            this.toast('error', 'Select server and fill username/password');
+            return;
+        }
+
+        this.log('info', `Testing connection to ${CONFIG.sap.host}:${CONFIG.sap.port}...`);
+
+        try {
+            const result = await this.sapCall({ action: 'TEST' });
+            // If we get a JSON response, auth is valid
+            this.connected = true;
+            this.saveConnection();
+            this.updateConnectionUI();
+            this.log('success', `✓ Connected as ${CONFIG.sap.user}`);
+            this.toast('success', 'Connected & saved!');
+        } catch (err) {
+            if (err.message.includes('Authentication failed') || err.message.includes('401')) {
+                this.connected = false;
+                this.log('error', `✗ Wrong username or password`);
+                this.toast('error', 'Wrong username or password');
+            } else if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+                this.connected = false;
+                this.log('error', `✗ Cannot reach ${CONFIG.sap.host}:${CONFIG.sap.port}`);
+                this.toast('error', 'Cannot reach SAP server');
+            } else {
+                this.connected = false;
+                this.log('error', `✗ ${err.message}`);
+                this.toast('error', err.message);
+            }
         }
     }
 
@@ -332,34 +340,23 @@ class TransportManager {
 
     // ---- Settings ----
     openSettings() {
-        document.getElementById('set-host').value = CONFIG.sap.host;
-        document.getElementById('set-port').value = CONFIG.sap.port;
-        document.getElementById('set-client').value = CONFIG.sap.client;
         document.getElementById('set-user').value = CONFIG.sap.user;
         document.getElementById('set-pass').value = CONFIG.sap.pass;
-        document.getElementById('set-target').value = CONFIG.targetSystem;
         document.getElementById('set-wa-enabled').checked = CONFIG.whatsapp.enabled;
-        document.getElementById('set-wa-token').value = CONFIG.whatsapp.apiToken;
-        document.getElementById('set-wa-target').value = CONFIG.whatsapp.target;
         document.getElementById('set-wa-template').value = CONFIG.whatsapp.messageTemplate;
         document.getElementById('settings-modal').classList.remove('hidden');
     }
     closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
     saveSettings() {
-        CONFIG.sap.host = document.getElementById('set-host').value;
-        CONFIG.sap.port = document.getElementById('set-port').value;
-        CONFIG.sap.client = document.getElementById('set-client').value;
         CONFIG.sap.user = document.getElementById('set-user').value;
         CONFIG.sap.pass = document.getElementById('set-pass').value;
-        CONFIG.targetSystem = document.getElementById('set-target').value;
         CONFIG.whatsapp.enabled = document.getElementById('set-wa-enabled').checked;
-        CONFIG.whatsapp.apiToken = document.getElementById('set-wa-token').value;
-        CONFIG.whatsapp.target = document.getElementById('set-wa-target').value;
         CONFIG.whatsapp.messageTemplate = document.getElementById('set-wa-template').value;
         this.saveConnection();
         this.updateConnectionUI();
         this.closeSettings();
         this.toast('success', 'Settings saved');
+        this.checkFormReady();
     }
 
     saveConnection() {
@@ -392,14 +389,6 @@ class TransportManager {
     bindEvents() {
         document.getElementById('tr-number').addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase(); this.checkFormReady(); });
         document.getElementById('tr-desc').addEventListener('input', () => this.checkFormReady());
-
-        // Pre-fill connection form from config
-        if (CONFIG.sap.host) document.getElementById('sap-host').value = CONFIG.sap.host;
-        if (CONFIG.sap.port) document.getElementById('sap-port').value = CONFIG.sap.port;
-        if (CONFIG.sap.client) document.getElementById('sap-client').value = CONFIG.sap.client;
-        if (CONFIG.sap.user) document.getElementById('sap-user').value = CONFIG.sap.user;
-        if (CONFIG.sap.pass) document.getElementById('sap-pass').value = CONFIG.sap.pass;
-        if (CONFIG.targetSystem) document.getElementById('sap-target').value = CONFIG.targetSystem;
     }
 }
 

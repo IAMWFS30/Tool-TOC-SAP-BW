@@ -8,8 +8,8 @@
 const CONFIG = {
     // Server presets
     servers: {
-        bw: { name: "SAP BW (MBD)", host: "dc1sdevbw.mitrakeluarga.com", port: "8051", client: "100", target: "MBQ" },
-        ecc: { name: "SAP ECC (MED)", host: "dc1sdevecc.mitrakeluarga.com", port: "8001", client: "100", target: "MEQ" }
+        bw: { name: "SAP BW (MBD)", host: "dc1sdevbw.mitrakeluarga.com", port: "8051", client: "100", target: "MBQ", waTemplate: "Selamat pagi Tim Basis, minta tolong TOC ke MBQ:\n{TR};1;W\nTerima kasih" },
+        ecc: { name: "SAP ECC (MED)", host: "dc1sdeverp.mitrakeluarga.com", port: "8021", client: "101", target: "MEQ", waTemplate: "Selamat pagi Tim Basis, minta tolong TOC ke MEQ:\n{TR};1;W\nTerima kasih" }
     },
 
     // SAP Connection (configurable via Settings UI)
@@ -33,13 +33,14 @@ const CONFIG = {
         example: "MBDK900123"
     },
 
-    // WhatsApp Notification (Fonnte)
+    // WhatsApp Notification (via whatsapp-web.js backend)
     whatsapp: {
-        enabled: false,
-        apiUrl: "https://api.fonnte.com/send",
-        apiToken: "",
-        target: "",
-        messageTemplate: "Selamat pagi Tim Basis, minta tolong transport TR ke MBQ:\n{TR};1;W\nTerima kasih"
+        enabled: true,
+        // Group name (partial match) — backend will find the group
+        groupName: "Basis",
+        // Or use exact group ID (get from /api/wa/groups)
+        groupId: "",
+        messageTemplate: "Selamat pagi Tim Basis, minta tolong TOC ke MBQ:\n{TR};1;W\nTerima kasih"
     },
 
     // UI Settings

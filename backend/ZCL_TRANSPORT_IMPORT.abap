@@ -60,6 +60,11 @@
             lv_method     TYPE string.
 
       lv_method = server->request->get_header_field( name = '~request_method' ).
+      IF lv_method = 'OPTIONS'.
+        " Handle CORS preflight
+        send_json_response( io_server = server iv_status = 200 iv_json = '{}' ).
+        RETURN.
+      ENDIF.
       IF lv_method <> 'POST'.
         lv_json = '{"success":false,"message":"Only POST method allowed"}'.
         send_json_response( io_server = server iv_status = 405 iv_json = lv_json ).
